@@ -53,29 +53,33 @@ def generate_readable_tag():
 def write_to_file(tag, status):
     username = f"@{tag}"
     files = {
-        "unavailable": unavailable_filepath,
+        "unavail": unavailable_filepath,
         "taken": taken_filepath,
-        "available": available_filepath,
+        "avail": available_filepath,
     }
 
     filename = files.get(status, all_user_filepath)
 
     with file_mutex:
         if not os.path.exists(filename):
-            with open(filename, "w+"):
+            with open(filename, "w+", encoding="utf-8"):
                 pass
 
         with open(filename, "a+", encoding="utf-8") as file_usernames:
             file_usernames.write(f"{username}\n")
-            print(f"[{status.upper()}] - {username} ")
+        print(f"[{status.upper()}] - {username} ")
 
-        with open(all_user_filepath, "a+") as file_usernames:
+        with open(all_user_filepath, "a+", encoding="utf-8") as file_usernames:
             file_usernames.write(f"{username}\n")
 
 
 def is_tag_in_file(tag, filename):
     with file_mutex:
-        with open(filename, "r", encoding="utf-8") as file_usernames:
+        if not os.path.exists(filename):
+            with open(filename, "w+", encoding="utf-8"):
+                pass
+
+        with open(filename, "r+", encoding="utf-8") as file_usernames:
             usernames = file_usernames.readlines()
             return tag in usernames
 
@@ -98,7 +102,7 @@ def parse_answer(tag):
             for status in ["unavail", "taken", "avail"]:
                 status_element = block.find("div", class_=f"table-cell-value tm-value tm-status-{status}")
                 if status_element:
-                    normalized_status = status_element.text.strip().lower()
+                    normalized_status = status.strip().lower()
                     filename = files.get(normalized_status, "all_usernames.txt")
 
                     if not is_tag_in_file(tag, filename):
@@ -115,12 +119,11 @@ def main():
     retries = 3
 
     for _ in range(retries):
-        try:
+        if os.path.exists(all_user_filepath):
             parse_answer(tag)
-            break
-        except Exception as e:
-            print(f"Ошибка: {e}")
-            time.sleep(5)
+        else:
+            print(f"Файл 'all_usernames.txt' не существует.")
+        break
 
 
 if __name__ == '__main__':
