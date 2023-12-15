@@ -22,31 +22,33 @@ all_user_filename = "all_usernames.txt"
 
 os.makedirs(__directory, exist_ok=True)
 
-with open(os.path.join(__directory, unavailable_filename), "w+") as file_usernames:
-    file_usernames.close()
-with open(os.path.join(__directory, available_filename), "w+") as file_usernames:
-    file_usernames.close()
-with open(os.path.join(__directory, taken_filename), "w+") as file_usernames:
-    file_usernames.close()
-with open(os.path.join(__directory, all_user_filename), "w+") as file_usernames:
-    file_usernames.close()
+with open(os.path.join(__directory, unavailable_filename), "w+") as unavailable_filenames:
+    unavailable_filenames.close()
+with open(os.path.join(__directory, available_filename), "w+") as available_filenames:
+    available_filenames.close()
+with open(os.path.join(__directory, taken_filename), "w+") as taken_filenames:
+    taken_filenames.close()
+with open(os.path.join(__directory, all_user_filename), "w+") as all_user_filenames:
+    all_user_filenames.close()
 
-with open("all_words.txt", "r", encoding="utf-8") as words_file:
-    all_words = [word.strip() for word in words_file.readlines()]
+
+def read_words_file():
+    with open("all_words.txt", "r", encoding="utf-8") as words_file:
+        return [word.strip() for word in words_file.readlines()]
+
 
 file_mutex = threading.Lock()
 
-# Получение абсолютного пути для файлов
 unavailable_filepath = os.path.join(__directory, unavailable_filename)
 taken_filepath = os.path.join(__directory, taken_filename)
 available_filepath = os.path.join(__directory, available_filename)
 all_user_filepath = os.path.join(__directory, all_user_filename)
 
+
 def generate_readable_tag():
-    while True:
-        tag = random.choice(all_words)
-        if not is_tag_in_file(tag, all_user_filepath):
-            return tag
+    all_words = read_words_file()
+    return random.choice(all_words)
+
 
 def write_to_file(tag, status):
     username = f"@{tag}"
@@ -63,13 +65,17 @@ def write_to_file(tag, status):
             with open(filename, "w+"):
                 pass
 
-        with open(filename, "a+") as file_usernames:
+        with open(filename, "a+", encoding="utf-8") as file_usernames:
             file_usernames.write(f"{username}\n")
             print(f"[{status.upper()}] - {username} ")
 
+        with open(all_user_filepath, "a+") as file_usernames:
+            file_usernames.write(f"{username}\n")
+
+
 def is_tag_in_file(tag, filename):
     with file_mutex:
-        with open(filename, "r") as file_usernames:
+        with open(filename, "r", encoding="utf-8") as file_usernames:
             usernames = file_usernames.readlines()
             return tag in usernames
 
@@ -85,7 +91,7 @@ def parse_answer(tag):
     for _ in range(retries):
         try:
             driver.get(f'https://fragment.com/?query={tag}')
-            time.sleep(5)
+            time.sleep(0.5)
             bs = BeautifulSoup(driver.page_source, "html.parser")
             block = bs.find("tbody", class_="tm-high-cells")
 
@@ -124,4 +130,3 @@ if __name__ == '__main__':
         s = Service(executable_path='./chromedriver.exe')
         driver = webdriver.Chrome(service=s, options=options)
         main()
-
