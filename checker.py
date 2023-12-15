@@ -1,5 +1,3 @@
-# START = 20:09
-
 import string
 import threading
 import time
