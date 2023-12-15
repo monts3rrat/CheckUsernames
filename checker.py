@@ -1,3 +1,5 @@
+# START = 20:09
+
 import string
 import threading
 import time
@@ -119,11 +121,16 @@ def main():
     retries = 3
 
     for _ in range(retries):
-        if os.path.exists(all_user_filepath):
-            parse_answer(tag)
-        else:
-            print(f"Файл 'all_usernames.txt' не существует.")
-        break
+        try:
+            if os.path.exists(all_user_filepath):
+                parse_answer(tag)
+            else:
+                print(f"Файл 'all_usernames.txt' не существует.")
+            break
+
+        except Exception as e:
+            print(e)
+            pass
 
 
 if __name__ == '__main__':
