@@ -4,15 +4,7 @@ import time
 import webbrowser
 import os
 import random
-
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
 import requests
 
 __directory = "./usernames_txt/"
@@ -34,7 +26,7 @@ with open(os.path.join(__directory, all_user_filename), "w+") as all_user_filena
 
 
 def read_words_file():
-    with open("all_words.txt", "r", encoding="utf-8") as words_file:
+    with open("database.txt", "r", encoding="utf-8") as words_file:
         return [word.strip() for word in words_file.readlines()]
 
 
@@ -53,33 +45,38 @@ def generate_readable_tag():
 
 def write_to_file(tag, status):
     username = f"@{tag}"
-    files = {
-        "unavail": unavailable_filepath,
-        "taken": taken_filepath,
-        "avail": available_filepath,
-    }
+    if 4 <= len(tag) <= 12:
+        files = {
+            "unavail": unavailable_filepath,
+            "taken": taken_filepath,
+            "avail": available_filepath,
+        }
 
-    filename = files.get(status, all_user_filepath)
+        filename = files.get(status, all_user_filepath)
 
-    with file_mutex:
-        if not os.path.exists(filename):
-            with open(filename, "w+", encoding="utf-8"):
-                pass
+        with file_mutex:
+            if not os.path.exists(filename):
+                with open(filename, "w+", encoding="utf-8"):
+                    pass
 
-        with open(filename, "a+", encoding="utf-8") as file_usernames:
-            file_usernames.write(f"{username}\n")
-        print(f"[{status.upper()}] - {username} ")
+            with open(filename, "a+", encoding="utf-8") as file_usernames:
+                file_usernames.write(f"{username}\n")
+            print(f"[{status.upper()}] - {username} ")
 
-        with open(all_user_filepath, "a+", encoding="utf-8") as file_usernames:
-            file_usernames.write(f"{username}\n")
+            with open(all_user_filepath, "a+", encoding="utf-8") as file_usernames:
+                file_usernames.write(f"{username}\n")
 
 
 def is_tag_in_file(tag, filename):
-    with file_mutex:
-        if not os.path.exists(f"{__directory}{filename}"):
-            with open(filename, "r+", encoding="utf-8") as file_usernames:
-                usernames = file_usernames.readlines()
-                return tag in usernames
+    if 4 <= len(tag) <= 12:
+        with file_mutex:
+            if not os.path.exists(f"{__directory}{filename}"):
+                with open(filename, "r+", encoding="utf-8") as file_usernames:
+                    usernames = file_usernames.readlines()
+                    if len(usernames) > 4:
+                        return tag in usernames
+                    else:
+                        pass
 
 
 def parse_answer(tag):
