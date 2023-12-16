@@ -1,9 +1,18 @@
 import string
 import threading
 import time
+import webbrowser
 import os
 import random
+
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
 import requests
 
 __directory = "./usernames_txt/"
@@ -67,13 +76,10 @@ def write_to_file(tag, status):
 
 def is_tag_in_file(tag, filename):
     with file_mutex:
-        if not os.path.exists(filename):
-            with open(filename, "w+", encoding="utf-8"):
-                pass
-
-        with open(filename, "r+", encoding="utf-8") as file_usernames:
-            usernames = file_usernames.readlines()
-            return tag in usernames
+        if not os.path.exists(f"{__directory}{filename}"):
+            with open(filename, "r+", encoding="utf-8") as file_usernames:
+                usernames = file_usernames.readlines()
+                return tag in usernames
 
 
 def parse_answer(tag):
@@ -85,31 +91,25 @@ def parse_answer(tag):
 
     retries = 3
     for _ in range(retries):
-        try:
-            response = requests.get(f'https://fragment.com/?query={tag}')
-            bs = BeautifulSoup(response.text, "html.parser")
-            block = bs.find("tbody", class_="tm-high-cells")
+        response = requests.get(f'https://fragment.com/?query={tag}')
+        bs = BeautifulSoup(response.text, "html.parser")
+        block = bs.find("tbody", class_="tm-high-cells")
 
-            for status in ["unavail", "taken", "avail"]:
-                status_element = block.find("div", class_=f"table-cell-value tm-value tm-status-{status}")
-                if status_element:
-                    normalized_status = status.strip().lower()
-                    filename = files.get(normalized_status, "all_usernames.txt")
+        for status in ["unavail", "taken", "avail"]:
+            status_element = block.find("div", class_=f"table-cell-value tm-value tm-status-{status}")
+            if status_element:
+                normalized_status = status.strip().lower()
+                filename = files.get(normalized_status, "all_usernames.txt")
 
-                    if not is_tag_in_file(tag, filename):
-                        write_to_file(tag, normalized_status)
-                    break
-            break
-        except Exception as e:
-            print(e)
+                if not is_tag_in_file(tag, filename):
+                    write_to_file(tag, normalized_status)
+                break
+        break
 
 
 def main():
     tag = generate_readable_tag()
-    if os.path.exists(all_user_filepath):
-        parse_answer(tag)
-    else:
-        print(f"Файл 'all_usernames.txt' не существует.")
+    parse_answer(tag)
 
 
 if __name__ == '__main__':
