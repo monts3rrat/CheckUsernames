@@ -1,18 +1,10 @@
 import string
 import threading
 import time
-import webbrowser
 import os
 import random
-
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
+import requests
 
 __directory = "./usernames_txt/"
 unavailable_filename = "unavailable_usernames.txt"
@@ -94,9 +86,8 @@ def parse_answer(tag):
     retries = 3
     for _ in range(retries):
         try:
-            driver.get(f'https://fragment.com/?query={tag}')
-            time.sleep(0.5)
-            bs = BeautifulSoup(driver.page_source, "html.parser")
+            response = requests.get(f'https://fragment.com/?query={tag}')
+            bs = BeautifulSoup(response.text, "html.parser")
             block = bs.find("tbody", class_="tm-high-cells")
 
             for status in ["unavail", "taken", "avail"]:
@@ -107,34 +98,20 @@ def parse_answer(tag):
 
                     if not is_tag_in_file(tag, filename):
                         write_to_file(tag, normalized_status)
-
                     break
             break
-        finally:
-            driver.quit()
+        except Exception as e:
+            print(e)
 
 
 def main():
     tag = generate_readable_tag()
-    retries = 3
-
-    for _ in range(retries):
-        try:
-            if os.path.exists(all_user_filepath):
-                parse_answer(tag)
-            else:
-                print(f"Файл 'all_usernames.txt' не существует.")
-            break
-
-        except Exception as e:
-            print(e)
-            pass
+    if os.path.exists(all_user_filepath):
+        parse_answer(tag)
+    else:
+        print(f"Файл 'all_usernames.txt' не существует.")
 
 
 if __name__ == '__main__':
     while True:
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        s = Service(executable_path='./chromedriver.exe')
-        driver = webdriver.Chrome(service=s, options=options)
         main()
