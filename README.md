@@ -1,4 +1,4 @@
-@metafucker (metafucker)                                
-@extrasense (__crime_prevention_unit_003)                          
+@metafucker                    
+@extrasense                
 
-Бот для поиска юзернеймов
+tg bot for searching usernames
